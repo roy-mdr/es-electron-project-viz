@@ -135,6 +135,7 @@ function readFile(filePath) {
 
 let dirMap = {};
 let etapaMap = new Map();
+let origins = [];
 
 
 function addToGraph(orig, dest, note = "") {
@@ -170,22 +171,18 @@ function addToGraph(orig, dest, note = "") {
   const destVersion = destSplit[destSplit.length - 1];
   const destAlias   = `${destEtapa} / ${destVersion}`/*.replace(/\(|\)|\[|\]|\{|\}|\\|\//g, "-")*/
 
-  if (!(destMD5 in dirMap)) {
-    // if this dir hasn't been processed
-
-    dirMap[destMD5] = {
-      id: destMD5,
-      dir: dest,
-      alias: destAlias,
-      note: note,
-      etapa: destEtapa,
-      version: destVersion,
-      error: false,
-      orig: origMD5,
-      is_leaf: true,
-      is_last_version: false
-    };
-  }
+  dirMap[destMD5] = {
+    id: destMD5,
+    dir: dest,
+    alias: destAlias,
+    note: note,
+    etapa: destEtapa,
+    version: destVersion,
+    error: false,
+    orig: origMD5,
+    is_leaf: true,
+    is_last_version: false
+  };
 
   if ( origEtapa == destEtapa ) {
     dirMap[destMD5].error = true;
@@ -227,9 +224,10 @@ function addToGraph(orig, dest, note = "") {
   }
 
 
-
+  if ( !origins.includes(origMD5) ) origins.push(origMD5);
 
   if ( (origMD5 in dirMap) ) dirMap[origMD5].is_leaf = false;
+  if ( origins.includes(destMD5) ) dirMap[destMD5].is_leaf = false;
 
 }
 
