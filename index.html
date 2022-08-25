@@ -22,7 +22,13 @@
 		.leafClass > rect{
 		    /*fill: #FFFF00 !important;*/
 		    stroke: gold !important;
-		    /*stroke-width: 2px !important;*/
+		    stroke-width: 2px !important;
+		}
+
+		.lastVClass > rect{
+		    fill: #FFFF00 !important;
+		    stroke: gold !important;
+		    stroke-width: 2px !important;
 		}
 
 		.errorClass > rect{
@@ -118,29 +124,28 @@
 
 	    			if (gNode.is_leaf) {
 	    				// Node has no branches
-	    				graphDefinition += `(["${gNode.alias}"]):::leafClass`;
+	    				if (gNode.is_last_version) {
+	    					graphDefinition += `(["${gNode.alias}"]):::lastVClass`;
+	    				} else {
+		    				graphDefinition += `(["${gNode.alias}"]):::leafClass`;
+	    				}
 	    			} else {
 	    				// Node has branches
-	    				graphDefinition += `["${gNode.alias}"]`;
+	    				if (gNode.is_last_version) {
+	    					graphDefinition += `["${gNode.alias}"]:::lastVClass`;
+	    				} else {
+		    				graphDefinition += `["${gNode.alias}"]`;
+	    				}
 	    			}
 	    		}
 
 	    	} else {
 	    		// Node with format error
-
 	    		if (!gNode.orig) {
 	    			// Node is Root
 	    			graphDefinition += `\n    ${gNode.id}(["${gNode.alias}"]):::errorClass`;
 	    		} else {
-	    			graphDefinition += `\n    ${gNode.orig}-->${gNode.id}`;
-
-	    			if (gNode.is_leaf) {
-	    				// Node has no branches
-	    				graphDefinition += `(["${gNode.alias}"]):::errorClass`;
-	    			} else {
-	    				// Node has branches
-	    				graphDefinition += `["${gNode.alias}"]:::errorClass`;
-	    			}
+	    			graphDefinition += `\n    ${gNode.orig}-->${gNode.id}["${gNode.alias}"]:::errorClass`;
 	    		}
 
 	    	}

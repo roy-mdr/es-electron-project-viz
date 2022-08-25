@@ -134,6 +134,7 @@ function readFile(filePath) {
 
 
 let dirMap = {};
+let etapaMap = new Map();
 
 
 function addToGraph(orig, dest, note = "") {
@@ -181,7 +182,8 @@ function addToGraph(orig, dest, note = "") {
       version: destVersion,
       error: false,
       orig: origMD5,
-      is_leaf: true
+      is_leaf: true,
+      is_last_version: false
     };
   }
 
@@ -200,6 +202,28 @@ function addToGraph(orig, dest, note = "") {
   } else {
     dirMap[destMD5].error = true;
     dirMap[destMD5].alias += " [Wrong format: Version]";
+  }
+
+  if (!dirMap[destMD5].error) {
+
+    // Track last version of each etapa
+    if (etapaMap.get(destEtapa) === undefined) {
+      // If there was no track of this Etapa
+      etapaMap.set(destEtapa, destMD5); // Set this Etapa as last version
+    } else {
+
+      if ( dirMap[destMD5].version > dirMap[ etapaMap.get(destEtapa) ].version) {
+        // If this version is greater than the one saved
+        etapaMap.set(destEtapa, destMD5); // Set this Etapa as last version
+      }
+
+      if ( (dirMap[destMD5].version == dirMap[ etapaMap.get(destEtapa) ].version) && (destMD5 !== etapaMap.get(destEtapa)) ) {
+        // If the versions are the same but different graphNode...
+        dirMap[destMD5].error = true;
+        dirMap[destMD5].alias += " [Bad versioning: Two same versions of same Etapa]";
+      }
+      
+    }
   }
 
 
@@ -237,6 +261,10 @@ ipcMain.on("toMain_indexReady", (event, args) => {
 
       if (i == results.length - 1) {
         // If last round...
+
+        etapaMap.forEach( (value, key, map) => {
+          dirMap[value].is_last_version = true;
+        });
 
         console.log("graph", dirMap)
         mainWindow.webContents.send("fromMain_toGraph", JSON.stringify(dirMap));
