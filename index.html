@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<head>
+	<style type="text/css">
+		.mermaidTooltip {
+			display: block;
+			position: absolute;
+			z-index: 10;
+			color: white;
+			background-color: black;
+			border-radius: 0.2em;
+			padding: 1em;
+			top: 2em;
+			max-width: 50vw;
+
+			white-space: pre-wrap;       /* Since CSS 2.1 */ /* white-space:pre-line; */
+			white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+			white-space: -pre-wrap;      /* Opera 4-6 */
+			white-space: -o-pre-wrap;    /* Opera 7 */
+			word-wrap: break-word;       /* Internet Explorer 5.5+ */
+		}
+
+		.leafClass > rect{
+		    fill: #FFFF00 !important;
+		    stroke: gold !important;
+		    stroke-width: 2px !important;
+		}
+	</style>
+	<meta charset="utf-8">
+</head>
+<body>
+
+	<div>
+		<button type="button" id="btnZoomOut">-</button>
+		<button type="button" id="btnZoomIn">+</button>
+		<button type="button" id="btnZoomRst">Reset</button>
+	</div>
+
+
+  <div class="graphScroller" style="max-width: 100vw; overflow: auto; padding-right: 50vw; padding-top: 25vh; padding-bottom: 25vh;">
+	  <div id="graphContainer" style="width: max-content;">Loading...</div>
+  </div>
+  <pre class="mermaidTooltip"></pre>
+
+  <pre id="preload-out" style="display: none;">
+  	Loading...
+  </pre>
+
+
+ <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+ <script>
+	console.log("from index.html")
+
+	const container = document.getElementById('graphContainer');
+
+	mermaid.initialize({
+		startOnLoad:false,
+		useMaxWidth: false,
+		securityLevel: 'loose' // loose to be able to click on a node and run a callback function
+	});
+
+	function mermaidRender(graphDefinition, domEl) { // Example of using the API var
+
+		let graphSvg = mermaid.mermaidAPI.render('svgGeneratedId', graphDefinition, (svgCode, bindFunctions) => {
+		    domEl.innerHTML = svgCode;
+		    bindFunctions(domEl);
+		}, /*domEl*/);
+	}
+
+	function exampleCallback(nodeId) {
+		console.log(nodeId)
+		window.api.send("toMain_openDir", objToGraph[nodeId].dir);
+	}
+
+
+	/*mermaidRender('graph TB\na-->b', container);
+	mermaidRender('graph TB\na-->c', container);
+	mermaidRender('graph TB\na-->d', container);
+
+
+	setTimeout( () => {
+		mermaidRender('graph TB\na-->e', container);
+	}, 2000);*/
+
+
+
+
+
+	let objToGraph;
+	let graphDefinition = `flowchart LR`;
+	let graphDefinitionEnd = ``;
+
+	function dataObjToGraph(objJSON) {
+		objToGraph = JSON.parse(objJSON);
+
+		/////////////// Generate Graph
+
+		for (gNodeId in objToGraph) {
+
+			gNode = objToGraph[gNodeId];
+
+			/*graphDefinition += `
+    ${gNode.orig}[${gNode.orig_alias}]-->|${gNode.note}|${gNode.id}[${gNode.alias}]`;*/
+
+    		if (!gNode.orig) {
+    			// Node is Root
+    			graphDefinition += `\n    ${gNode.id}(["${gNode.alias}"])`;
+    		} else {
+    			graphDefinition += `\n    ${gNode.orig}-->${gNode.id}`;
+
+    			if (gNode.is_leaf) {
+    				// Node has no branches
+    				graphDefinition += `(["${gNode.alias}"]):::leafClass`;
+    			} else {
+    				// Node has branches
+    				graphDefinition += `["${gNode.alias}"]`;
+    			}
+    		}
+
+			graphDefinitionEnd += `\n    click ${gNode.id} exampleCallback "${gNode.dir}\n-----\n${gNode.note}"`;
+		}
+
+		console.log(graphDefinition + graphDefinitionEnd)
+
+		mermaidRender(graphDefinition + graphDefinitionEnd, container);
+		
+	}
+
+
+
+
+
+
+
+
+
+
+	const zoomIn  = document.getElementById('btnZoomIn');
+	const zoomOut = document.getElementById('btnZoomOut');
+	const zoomRst = document.getElementById('btnZoomRst');
+
+	zoomOut.addEventListener('click', (e) => {
+		let svg = document.querySelector('#graphContainer svg');
+		let svgW = parseInt( svg.style.maxWidth.replace('px', '') );
+		console.log(svgW)
+		svg.style.maxWidth = (svgW - 20) + 'px';
+	});
+
+	zoomIn.addEventListener('click', (e) => {
+		let svg = document.querySelector('#graphContainer svg');
+		let svgW = parseInt( svg.style.maxWidth.replace('px', '') );
+		console.log(svgW, svgW + 20)
+		svg.style.maxWidth = (svgW + 20) + 'px';
+	});
+
+	zoomRst.addEventListener('click', (e) => {
+		let svg = document.querySelector('#graphContainer svg');
+		let svgW = parseInt( svg.style.maxWidth.replace('px', '') );
+		console.log(svgW)
+		svg.style.maxWidth = (svgW - 20) + 'px';
+	});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	window.api.receive("fromMain_toPre", (data) => {
+    	console.log(`Received ${data} from main process`);
+    	document.getElementById("preload-out").innerHTML = data;
+    });
+
+	window.api.receive("fromMain_toGraph", (data) => {
+    	dataObjToGraph(data);
+    });
+
+    window.addEventListener('load', (e) => {
+	    window.api.send("toMain_indexReady", "some data");
+    });
+
+
+
+
+    window.addEventListener('mousemove', (e) => {
+    	document.querySelector('.mermaidTooltip').style.left = e.clientX + 'px';
+    	document.querySelector('.mermaidTooltip').style.top = (e.clientY + 20) + 'px';
+    });
+</script>
+
+	<!-- You can also require other files to run in this process -->
+    <script src="./renderer.js"></script>
+</body>
+</html>
