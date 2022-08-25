@@ -143,7 +143,9 @@ function addToGraph(orig, dest, note = "") {
   const origMD5 = crypto.createHash('md5').update(orig).digest('hex');
 
   const origSplit = orig.split('\\');
-  const origAlias = `${origSplit[origSplit.length - 2]}/${origSplit[origSplit.length - 1]}`/*.replace(/\(|\)|\[|\]|\{|\}|\\|\//g, "-")*/
+  const origEtapa   = origSplit[origSplit.length - 2];
+  const origVersion = origSplit[origSplit.length - 1];
+  const origAlias = `${origVersion}`/*.replace(/\(|\)|\[|\]|\{|\}|\\|\//g, "-")*/
 
   if ( !(origMD5 in dirMap) ) {
     // if this dir hasn't been processed
@@ -162,8 +164,10 @@ function addToGraph(orig, dest, note = "") {
 
   const destMD5 = crypto.createHash('md5').update(dest).digest('hex');
 
-  const destSplit = dest.split('\\');
-  const destAlias = `${destSplit[destSplit.length - 2]}/${destSplit[destSplit.length - 1]}`/*.replace(/\(|\)|\[|\]|\{|\}|\\|\//g, "-")*/
+  const destSplit   = dest.split('\\');
+  const destEtapa   = destSplit[destSplit.length - 2];
+  const destVersion = destSplit[destSplit.length - 1];
+  const destAlias   = `${destEtapa} / ${destVersion}`/*.replace(/\(|\)|\[|\]|\{|\}|\\|\//g, "-")*/
 
   if (!(destMD5 in dirMap)) {
     // if this dir hasn't been processed
@@ -173,10 +177,33 @@ function addToGraph(orig, dest, note = "") {
       dir: dest,
       alias: destAlias,
       note: note,
+      etapa: destEtapa,
+      version: destVersion,
+      error: false,
       orig: origMD5,
       is_leaf: true
     };
   }
+
+  if ( origEtapa == destEtapa ) {
+    dirMap[destMD5].error = true;
+    dirMap[destMD5].alias += " [Wrong origin: Same Etapa]";
+  }
+
+  if ( !(/^\d\d [^ ].+$/.test(destEtapa)) ) {
+    dirMap[destMD5].error = true;
+    dirMap[destMD5].alias += " [Wrong format: Etapa]";
+  }
+
+  if ( /^V \d+\.\d+$/.test(destVersion) ) {
+    dirMap[destMD5].version = parseFloat( destVersion.split(' ')[1] );
+  } else {
+    dirMap[destMD5].error = true;
+    dirMap[destMD5].alias += " [Wrong format: Version]";
+  }
+
+
+
 
   if ( (origMD5 in dirMap) ) dirMap[origMD5].is_leaf = false;
 

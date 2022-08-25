@@ -20,8 +20,14 @@
 		}
 
 		.leafClass > rect{
-		    fill: #FFFF00 !important;
+		    /*fill: #FFFF00 !important;*/
 		    stroke: gold !important;
+		    /*stroke-width: 2px !important;*/
+		}
+
+		.errorClass > rect{
+		    fill: indianred !important;
+		    stroke: red !important;
 		    stroke-width: 2px !important;
 		}
 	</style>
@@ -101,20 +107,43 @@
 			/*graphDefinition += `
     ${gNode.orig}[${gNode.orig_alias}]-->|${gNode.note}|${gNode.id}[${gNode.alias}]`;*/
 
-    		if (!gNode.orig) {
-    			// Node is Root
-    			graphDefinition += `\n    ${gNode.id}(["${gNode.alias}"])`;
-    		} else {
-    			graphDefinition += `\n    ${gNode.orig}-->${gNode.id}`;
+    		if (!gNode.error) {
+    			// Node ok
 
-    			if (gNode.is_leaf) {
-    				// Node has no branches
-    				graphDefinition += `(["${gNode.alias}"]):::leafClass`;
-    			} else {
-    				// Node has branches
-    				graphDefinition += `["${gNode.alias}"]`;
-    			}
-    		}
+	    		if (!gNode.orig) {
+	    			// Node is Root
+	    			graphDefinition += `\n    ${gNode.id}(["${gNode.alias}"])`;
+	    		} else {
+	    			graphDefinition += `\n    ${gNode.orig}-->${gNode.id}`;
+
+	    			if (gNode.is_leaf) {
+	    				// Node has no branches
+	    				graphDefinition += `(["${gNode.alias}"]):::leafClass`;
+	    			} else {
+	    				// Node has branches
+	    				graphDefinition += `["${gNode.alias}"]`;
+	    			}
+	    		}
+
+	    	} else {
+	    		// Node with format error
+
+	    		if (!gNode.orig) {
+	    			// Node is Root
+	    			graphDefinition += `\n    ${gNode.id}(["${gNode.alias}"]):::errorClass`;
+	    		} else {
+	    			graphDefinition += `\n    ${gNode.orig}-->${gNode.id}`;
+
+	    			if (gNode.is_leaf) {
+	    				// Node has no branches
+	    				graphDefinition += `(["${gNode.alias}"]):::errorClass`;
+	    			} else {
+	    				// Node has branches
+	    				graphDefinition += `["${gNode.alias}"]:::errorClass`;
+	    			}
+	    		}
+
+	    	}
 
 			graphDefinitionEnd += `\n    click ${gNode.id} exampleCallback "${gNode.dir}\n-----\n${gNode.note}"`;
 		}
